@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# 本機工作檔與驗證產物
+__pycache__/
+*.pyc
+.venv/
+.env
+work/
+test-artifacts/
+*.pptx
+*.pdf
+*.text-safety.json
+*.merge-report.json

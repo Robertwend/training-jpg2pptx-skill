@@ -49,6 +49,8 @@ python -m pip install -r requirements.txt
 
 完整操作見 [SKILL.md](SKILL.md)、[批次流程](references/batch-workflow.md) 與 [場景規格](references/spec-schema.md)。
 
+預設以資訊結構建立原生文字與圖形，精簡背景細格、弱漸層及微光裝飾；批次共用繪圖函式與建置快取，集中渲染合併檔，再逐頁核對。具體做法見 [精簡重建與渲染效率](references/efficient-rebuild.md)。
+
 ## 品質與限制
 
 所有可辨識文字都要納入原生文字清單，包含圖示旁的標籤。照片、紋理與複雜插畫可拆成可替換圖片，但不能用整頁圖或大型含文字裁切冒充完整可編輯。特定點陣文字例外必須有使用者授權並記錄。

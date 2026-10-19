@@ -8,7 +8,10 @@ try {
     $initialCount=$app.Presentations.Count
     if($request.mode -eq 'render') {
         $presentation=$app.Presentations.Open([string]$request.input,$true,$false,$false)
-        for($number=1;$number -le $presentation.Slides.Count;$number++) {
+        $slideNumbers=if($null -ne $request.slides) {@($request.slides)} else {@(1..$presentation.Slides.Count)}
+        foreach($number in $slideNumbers) {
+            $number=[int]$number
+            if([int]$number -lt 1 -or [int]$number -gt $presentation.Slides.Count) {throw '渲染頁碼超出簡報範圍'}
             $imagePath=Join-Path ([string]$request.output) ('slide_{0:D4}.png' -f $number)
             $presentation.Slides.Item($number).Export($imagePath,'PNG',[int]$request.width,[int]$request.height)
         }

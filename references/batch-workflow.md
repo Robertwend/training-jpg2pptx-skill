@@ -18,7 +18,7 @@ python scripts/prepare_batch.py "來源資料夾" --work "工作目錄"
 
 場景需有 `source.path`、`source.sha256`、與原圖一致的 `canvas`、`content.texts` 及 `elements`。相對素材路徑以場景 JSON 所在目錄為準，不能以整批工作目錄猜測。範例見 [場景規格](spec-schema.md)。
 
-依 [精簡重建與渲染效率](efficient-rebuild.md) 共用色票、幾何與圖示函式，先完成各頁場景；每頁仍完整保留自己的內容與配置。只有具體的字型、素材或繪圖疑慮才先用 `build_from_spec.cjs` 渲染代表頁草稿。工作中斷時先讀清單、場景和紀錄，從未完成或失效的頁面續作。
+依 [保真重建與執行效率](efficient-rebuild.md) 共用色票、幾何函式與真正相同的素材，先完成各頁場景。預設保真混合，複雜圖樣按 [素材流程](asset-workflow.md) 從各自原圖裁切；不能因為批次就全部改成近似原生圖示。只有具體字型、素材或繪圖疑慮才先渲染代表頁草稿。工作中斷時讀清單、場景和紀錄，從未完成或失效頁續作。
 
 ## 3. 建立單頁與完整簡報
 
@@ -27,7 +27,9 @@ node scripts/build_batch.cjs "工作目錄/batch.json"
 python scripts/validate_batch.py "工作目錄/batch.json" --structural-only
 ```
 
-從所有場景直接建立新的 PptxGenJS 簡報，逐頁加入原生物件；同時產生原圖比例的單頁檔。這能避免先轉成圖片，或拼貼 OOXML 導致媒體、字型、備註及關聯失效。
+從所有場景直接建立新的 PptxGenJS 簡報，逐頁加入原生文字／圖形與獨立原圖素材；同時產生原圖比例的單頁檔。這能避免整頁轉成圖片，或拼貼 OOXML 導致媒體、字型、備註及關聯失效。
+
+每頁只準備與量測一次，單頁／合併共用結果；字型與文字寬度在同一程序快取。`build-report.json.performance` 另列建置耗時與量測次數，`representation` 記錄該頁模式、文字／表格／獨立圖片／幾何數量；這些數量不能代替視覺保真評分。
 
 合併檔使用 `canvas.widthIn`、`heightIn` 的共同畫布，預設第一頁比例；每頁均等比 contain。混合比例留邊頁會列入驗證報告，不會拉伸或裁切。若使用者要求各頁都維持不同原生畫布尺寸，只能分檔交付，因為同一 PPTX 只有一組投影片尺寸。
 
@@ -41,6 +43,8 @@ python scripts/render_deck.py "工作目錄/merged.pptx" --out "工作目錄/pre
 
 優先一次渲染完整合併檔，不預設逐份渲染單頁檔。逐一用圖像工具對照原圖與 `slide_0001.png` 等預覽，不只看縮圖總覽。重點檢查所有文字、表格、圖示、點陣文字是否清除、顏色、間距、遮擋、留邊、頁序及內容完整性。集中修正已發現的問題後，才重建並重新渲染目前版本。
 
+工具依各頁及其母片、版式、佈景、媒體與簡報全域設定指紋復用未變預覽；PowerPoint 一次開啟只輸出變更頁。渲染器或尺寸改變時重作，字型／Office 環境改變時加 `--force`。LibreOffice 仍須整份轉 PDF，只有 PNG 可只產生變更頁。報告中的 `reusedSlides` 不表示工具已自行完成視覺核對。
+
 每頁實際檢視通過後才記錄：
 
 ```text
@@ -48,6 +52,8 @@ python scripts/record_review.py "工作目錄/batch.json" --page page_0001 --not
 ```
 
 沒有「整批自動通過」指令。發現問題使用 `--status needs-fix`；修正後再對新版預覽記錄通過。如果個別物件曾明確允許縮小字級，核對後用 `--accept-downsize "物件名稱"` 接受該項，不要預先全數接受。
+
+確實檢視過的一組頁面可明列 id，避免為每頁重跑整份結構掃描：`python scripts/record_review.py batch.json --pages page_0001 page_0002 --notes "兩頁均已逐字對照，原圖素材與版面已檢視"`。未明列頁面不產生紀錄；工具仍不會代替逐頁閱讀。相同問題適用單頁 `--page` 與明列多頁 `--pages`。
 
 紀錄綁定來源、場景、該頁輸出內容與預覽指紋。舊簡報的預覽無法驗收新簡報；來源、場景、文字或預覽被改動後不會沿用失效的通過紀錄。未改頁若重新渲染後完全一致，可保留相符紀錄。
 

@@ -80,6 +80,25 @@ def chart_payload(archive,part):
                     elif name=='xl/sharedStrings.xml':workbook[name]=[e.text or '' for e in ET.fromstring(embedded.read(name)).findall('.//s:t',sheet_ns)]
             result['workbooks'].append(workbook)
     return result
+
+def visual_fingerprint(archive, part, hashes, links):
+    """包含母片、版式、佈景、嵌入字型與媒體；排除其他頁及純備註內容。"""
+    pending=[part,'ppt/presentation.xml'];visited=set()
+    while pending:
+        current=pending.pop()
+        if current in visited:continue
+        visited.add(current)
+        if current not in hashes:hashes[current]=hashlib.sha256(archive.read(current)).hexdigest()
+        relation_part=rels_name(current)
+        if relation_part in archive.namelist():
+            visited.add(relation_part)
+            if relation_part not in hashes:hashes[relation_part]=hashlib.sha256(archive.read(relation_part)).hexdigest()
+        if current not in links:links[current]=relationships(archive,current)
+        for relation in links[current].values():
+            if relation['part'] and not relation['type'].endswith(('/slide','/notesSlide')):
+                pending.append(relation['part'])
+    payload='\n'.join(f'{name}:{hashes[name]}' for name in sorted(visited))
+    return hashlib.sha256(payload.encode('utf-8')).hexdigest()
 def audit_deck(file):
     file=Path(file).resolve()
     with zipfile.ZipFile(file) as z:
@@ -100,7 +119,7 @@ def audit_deck(file):
                     if e.tag in (f"{{{NS['a']}}}normAutofit",f"{{{NS['a']}}}spAutoFit"):
                         raise ValueError(f'延遲自動適配標記：{name}')
         pres=ET.fromstring(z.read('ppt/presentation.xml'));size=pres.find('p:sldSz',NS)
-        pr=relationships(z,'ppt/presentation.xml');slides=[]
+        pr=relationships(z,'ppt/presentation.xml');slides=[];visual_hashes={};visual_links={}
         for slide_id in pres.findall('p:sldIdLst/p:sldId',NS):
             part=pr[slide_id.attrib[f"{{{NS['r']}}}id"]]['part'];root=ET.fromstring(z.read(part));rels=relationships(z,part)
             summary={'shapeCount':0,'imageCount':0,'tableCount':0,'chartCount':0,'texts':[],'imageHashes':[],'notes':[],'chartData':[],
@@ -130,8 +149,7 @@ def audit_deck(file):
                         if ph is not None and ph.get('type') in ('sldNum','hdr','ftr','dt'):continue
                         tx=shape.find('p:txBody',NS)
                         if tx is not None and text_body(tx):summary['notes'].append(text_body(tx))
-            payload=z.read(part)+b''.join(z.read(rel['part']) for rel in rels.values() if rel['part'] and not rel['type'].endswith(('/slideLayout','/notesSlide')))
-            summary['fingerprint']=hashlib.sha256(payload).hexdigest();slides.append(summary)
+            summary['fingerprint']=visual_fingerprint(z,part,visual_hashes,visual_links);slides.append(summary)
         if not slides:raise ValueError('簡報沒有投影片。')
     return {'path':str(file),'sha256':sha256(file),'slideCount':len(slides),'sizeEmu':[int(size.get('cx')),int(size.get('cy'))],'slides':slides}
 def run_office(request,timeout=240):

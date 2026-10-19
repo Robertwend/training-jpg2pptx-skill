@@ -1,6 +1,6 @@
 interface:
   display_name: "Training 圖片轉可編輯簡報"
-  short_description: "單張與批次圖片逐頁重建可編輯簡報，支援續作、品質驗收與整併成完整 PPTX"
-  default_prompt: "使用 $training-jpg2pptx-skill 將提供的圖片逐頁轉成可編輯 PPTX，核對內容與版面後，依指定順序整併交付。"
+  short_description: "原圖圖樣保真保留，文字與常規圖形原生可編輯，支援批次續作、核對與完整簡報整併"
+  default_prompt: "使用 $training-jpg2pptx-skill 保留原圖圖樣，將文字與常規圖形原生重建、複雜圖樣拆成獨立素材，逐頁核對後依指定順序整併交付。"
 policy:
   allow_implicit_invocation: true

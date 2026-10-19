@@ -1,8 +1,8 @@
 {
   "name": "training-jpg2pptx-skill",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
-  "description": "單張與批次圖片重建可編輯 PowerPoint，並逐頁驗收與原生整併",
+  "description": "單張與批次圖片保真重建，原圖素材裁切、共用量測、增量渲染與可編輯簡報整併",
   "license": "MIT",
   "engines": {"node": ">=18"},
   "dependencies": {"pptxgenjs": "^4.0.1", "@napi-rs/canvas": "^0.1.100"}

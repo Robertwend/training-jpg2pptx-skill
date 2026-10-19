@@ -35,6 +35,7 @@ def validate_batch(manifest_file,final=True):
         if not final:continue
         image=render['images'][index]
         if image['slide']!=index+1 or sha256(image['path'])!=image['sha256']:raise ValueError(f"{page['id']} 預覽內容／順序不一致。")
+        if image.get('slideFingerprint',slide['fingerprint'])!=slide['fingerprint']:raise ValueError(f"{page['id']} 預覽與版式／母片／素材不一致。")
         review_path=base/'reviews'/f"{page['id']}.json"
         if not review_path.is_file():raise ValueError(f"{page['id']} 尚未完成逐頁視覺驗收。")
         review=read_json(review_path)

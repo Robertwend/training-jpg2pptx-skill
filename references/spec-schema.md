@@ -2,6 +2,8 @@
 
 每張圖片一份 JSON，所有 `x/y/w/h` 均為校正方向後的來源像素。元素陣列順序就是圖層順序。單頁與批次共用建置器，只有批次要求完整來源指紋與文字清單。
 
+預設 `reconstruction.mode` 為 `faithful-hybrid`：文字與常規幾何原生重建，複雜圖樣保留原圖素材。不指定此欄位的舊場景仍可建置，工具不會自動改寫既有圖樣。使用者明確要求原生簡化時，加入 `"reconstruction": {"mode": "native-simplified", "authorization": "使用者要求複雜插畫以原生圖形簡化重建"}`。`authorization` 須反映真實既有要求；兩種模式仍須完整原生文字。
+
 ```json
 {
   "canvas": {"widthPx": 1600, "heightPx": 900},
@@ -62,7 +64,11 @@
 }
 ```
 
-圖片 `role` 支援 `photo`、`texture`、`complex-icon`、`complex-illustration`、`logo`。可辨識文字先移除後原生重建；只有使用者已接受的具體例外可在 `content.rasterExceptions` 記錄：
+圖片 `role` 支援 `photo`、`texture`、`complex-icon`、`complex-illustration`、`logo`。
+
+保真素材優先使用 [裁切工具](asset-workflow.md)。產出的選用 `sourceCrop` 記錄 `sourcePath`、`sourceSha256`、`assetSha256`、校正方向後的 `referenceWidthPx/referenceHeightPx` 與來源 `x/y/w/h`。建置會驗證指紋與裁切範圍；元素本身的 `x/y/w/h` 仍為配置位置，可依需要改變，並保持素材比例。工具不自行判斷圖片是否含文字，也不會自動生成語意拆分。
+
+可辨識文字先移除後原生重建；只有使用者已接受的具體例外可在 `content.rasterExceptions` 記錄：
 
 ```json
 "rasterExceptions": [{

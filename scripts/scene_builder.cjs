@@ -154,6 +154,8 @@ function addScene(pptx, scene, base, target, pageId='page_0001', strict=false) {
       if(cols.length!==e.rows[0].length || heights.length!==e.rows.length || Math.abs(cols.reduce((a,b)=>a+b,0)-e.w)>.01 || Math.abs(heights.reduce((a,b)=>a+b,0)-e.h)>.01)throw new Error(`${e.name} 表格列高／欄寬與邊界不一致。`);
       const rows=e.rows.map((row,r)=>row.map((c,col)=>{
         const text=String(typeof c==='object'?c.text ?? '':c),opts=typeof c==='object'?clone(c.options || {}):{};
+        // PptxGenJS text accepts "mid", but table XML requires "middle"/"ctr".
+        if(opts.valign==='mid')opts.valign='middle';
         const face=opts.fontFace || e.fontFace || scene.theme?.bodyFontFace || 'Arial';
         const pre=textPreflight({name:`${e.name}[${r+1},${col+1}]`,text,w:cols[col],h:heights[r],bold:!!opts.bold,margin:opts.margin || 0},scene,face,opts.fontSize || e.fontSizePt || 14);
         textSafety.push({pageId,...pre});return {text,options:{...opts,fontFace:face,fontSize:pre.chosenPt*scale}};
